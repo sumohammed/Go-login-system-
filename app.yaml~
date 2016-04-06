@@ -1,0 +1,23 @@
+application: geocodeweb
+ 
+version: 1-0
+ 
+runtime: go
+ 
+api_version: go1
+ 
+handlers:
+- url: /favicon.ico
+  static_files: favicon.ico
+  upload: favicon.ico
+ 
+# All URLs beginning with /stylesheets are treated 
+# as paths to static files in the stylesheets/ directory.
+- url: /stylesheets
+  static_dir: stylesheets
+ 
+- url: /images
+  static_dir: images
+ 
+- url: /.*
+  script: _go_app
