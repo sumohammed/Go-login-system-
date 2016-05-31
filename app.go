@@ -8,6 +8,8 @@ import (
       "net/http"
       "log"
       "dbconfig"
+      "crypto/sha1"
+      "encoding/hex"
 )
 
 var (
@@ -141,13 +143,16 @@ func clearSession(response http.ResponseWriter) {
 func loginHandler(response http.ResponseWriter, request *http.Request) {
   usermail := request.FormValue("email")
   pass := request.FormValue("password")
+  h := sha1.New()
+  h.Write([]byte(pass))
+  encrypt_pass := hex.EncodeToString(h.Sum(nil))
   redirectTarget := "/"
-  var uid, username, email, password, created string ;
+  var username, email, password, created string ;
   if usermail != "" && pass != "" {
-    err := dbconfig.DB.QueryRow("SELECT * FROM Users.userinfo where email=?", usermail).Scan(&uid, &username, &email, &password, &created)
+    err := dbconfig.DB.QueryRow("SELECT * FROM Users.userinfo where email=?", usermail).Scan(&username, &email, &password, &created)
       if err != nil {
         log.Panic("User cant be found")
-      } else if password == pass {
+      } else if password == encrypt_pass {
          // .. check credentials ..
         setSession(username, response)
         redirectTarget = "/dash"
@@ -161,12 +166,15 @@ func signupauthHandler(response http.ResponseWriter, request *http.Request) {
   name := request.FormValue("name")
   email := request.FormValue("email")
   pass := request.FormValue("password")
+  h := sha1.New()
+  h.Write([]byte(pass))
+  new_pass := hex.EncodeToString(h.Sum(nil))
   redirectTarget := "/"
   stmt, err := dbconfig.DB.Prepare("INSERT userinfo SET username=?,email=?,password=?,created=?")
   if err != nil {
     log.Panic(err)
   }
-  stmt.Exec(name, email, pass, "1:00 Am")
+  stmt.Exec(name, email, new_pass, "1:00 Am")
   if name != "" && pass != "" {
     setSession(name, response)
     redirectTarget = "/dash"
